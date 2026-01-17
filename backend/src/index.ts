@@ -13,7 +13,7 @@ const CONFIG = {
   JWT_REFRESH_SECRET: "your-refresh-secret",
   EMAIL_JWT_SECRET: "your-email-jwt-secret",
   EMAIL_HOST: "smtp.gmail.com",
-  GROQ_API_KEY: "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",
+  GROQ_API_KEY: process.env.GROQ_API_KEY || "",
   EMAIL_PORT: 587,
   EMAIL_FROM: "shivakushwah144@gmail.com",
   FRONTEND_URL: "http://localhost:5174",
