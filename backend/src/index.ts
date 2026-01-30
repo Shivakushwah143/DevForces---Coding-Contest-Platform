@@ -16,7 +16,7 @@ const CONFIG = {
   GROQ_API_KEY: process.env.GROQ_API_KEY || "",
   EMAIL_PORT: 587,
   EMAIL_FROM: "shivakushwah144@gmail.com",
-  FRONTEND_URL: "http://localhost:5174",
+  FRONTEND_URL: "https://dev-forces-coding-contest-platform.vercel.app/",
 };
 
 console.log("Using direct configuration values");
