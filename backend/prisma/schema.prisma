@@ -8,8 +8,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:admin@localhost:5433/devforces?schema=public"
 }
+
 
 
 model User {
