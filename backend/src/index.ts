@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-// ==================== DIRECT CONFIG VALUES ====================
+// ==================== DIRECT CONFIG VALUES
 const CONFIG = {
   DATABASE_URL:
     "postgresql://postgres:admin@localhost:5433/devforces?schema=public",
