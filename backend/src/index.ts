@@ -5,17 +5,17 @@ dotenv.config();
 const CONFIG = {
   DATABASE_URL: process.env.DATABASE_URL || "",
   PORT: 4000,
-  EMAIL_USER: "shivakushwah144@gmail.com",
-  EMAIL_PASS: "bhhaiphbziefhkbu",
-  REDIS_URL: "redis://localhost:6379",
+  EMAIL_USER: process.env.EMAIL_USER || "shivakushwah144@gmail.com",
+  EMAIL_PASS: process.env.EMAIL_PASS || "bhhaiphbziefhkbu",
+  REDIS_URL: process.env.REDIS_URL || "rediss://default:AZrqAAIncDJmNDE2M2MzNjU5YzI0NmJmYTdkY2U1MDkzYzEwOTJhMHAyMzk2NTg@rare-pelican-39658.upstash.io:6379",
   JWT_SECRET: "your-secret-key",
-  JWT_REFRESH_SECRET: "your-refresh-secret",
-  EMAIL_JWT_SECRET: "your-email-jwt-secret",
+  JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET  || "your-refresh-secret",
+  EMAIL_JWT_SECRET: process.env.EMAIL_JWT_SECRET  || "your-email-jwt-secret",
   EMAIL_HOST: "smtp.gmail.com",
   GROQ_API_KEY: process.env.GROQ_API_KEY || "",
   EMAIL_PORT: 587,
-  EMAIL_FROM: "shivakushwah144@gmail.com",
-  FRONTEND_URL: "https://dev-forces-coding-contest-platform.vercel.app/",
+  EMAIL_FROM:  process.env.EMAIL_FROM  ||"shivakushwah144@gmail.com",
+  FRONTEND_URL:  process.env.FRONTEND_URL  ||"https://dev-forces-coding-contest-platform.vercel.app/",
 };
 
 console.log("Using direct configuration values");
