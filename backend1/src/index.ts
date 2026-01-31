@@ -3,7 +3,8 @@ dotenv.config();
 
 // ==================== DIRECT CONFIG VALUES
 const CONFIG = {
-  DATABASE_URL: process.env.DATABASE_URL || "",
+  DATABASE_URL:
+    "postgresql://postgres:admin@localhost:5433/devforces?schema=public",
   PORT: 4000,
   EMAIL_USER: "shivakushwah144@gmail.com",
   EMAIL_PASS: "bhhaiphbziefhkbu",
@@ -176,6 +177,7 @@ Score (0-${maxPoints}):`,
     return basicScore;
   }
 }
+
 
 // ==================== EMAIL SERVICE ====================
 async function sendEmail(to: string, subject: string, html: string) {
@@ -398,7 +400,7 @@ app.get("/contest/finished", async (req: Request, res: Response) => {
 app.get(
   "/contest/leaderboard/:contestId",
   async (req: Request, res: Response) => {
-    const { contestId } = req.params as { contestId: string };
+    const { contestId } = req.params;
     const limit = parseInt(req.query.limit as string) || 100;
 
     if (!contestId) {
@@ -450,9 +452,7 @@ app.get(
   "/contest/:contestId",
   userMiddleware,
   async (req: AuthRequest, res: Response) => {
-    
-    const { contestId } = req.params as { contestId: string };
-    
+    const { contestId } = req.params;
 
     const contest = await prisma.contest.findUnique({
       where: { id: contestId! },
@@ -478,7 +478,7 @@ app.get(
   "/contest/:contestId/:challengeId",
   userMiddleware,
   async (req: AuthRequest, res: Response) => {
-    const { contestId, challengeId } = req.params as { contestId: string ,challengeId : string};
+    const { contestId, challengeId } = req.params;
 
     const mapping = await prisma.contestToChallengeMapping.findFirst({
       where: {
@@ -508,7 +508,7 @@ app.post(
   "/contest/submit/:challengeId",
   userMiddleware,
   async (req: AuthRequest, res: Response) => {
-    const { challengeId } = req.params as { challengeId : string };;
+    const { challengeId } = req.params;
     const parsed = SubmissionSchema.safeParse(req.body);
 
     if (!parsed.success) {
@@ -615,7 +615,7 @@ app.post(
   "/admin/link/:challengeId/:contestId",
   adminMiddleware,
   async (req: AuthRequest, res: Response) => {
-    const { challengeId, contestId } = req.params  as { contestId: string  , challengeId : string};;
+    const { challengeId, contestId } = req.params;
     const { index } = req.body;
 
     const mapping = await prisma.contestToChallengeMapping.create({
@@ -634,7 +634,7 @@ app.delete(
   "/admin/link/:challengeId/:contestId",
   adminMiddleware,
   async (req: AuthRequest, res: Response) => {
-    const { challengeId, contestId } = req.params as { contestId: string ,challengeId :string};
+    const { challengeId, contestId } = req.params;
 
     await prisma.contestToChallengeMapping.deleteMany({
       where: {
@@ -680,3 +680,42 @@ app.listen(PORT, () => {
 });
 
 export default app;
+
+// import express from "express";
+// import cors from "cors";
+// import { CONFIG } from "./config/index.js";
+// import { requestLogger } from "./middleware/index.js";
+// import { startLeaderboardBackgroundJob } from "./services/leaderboardService.js";
+
+// // Import routes
+// import userRoutes from "./routes/userRoutes.js";
+// import contestRoutes from "./routes/contestRoutes.js";
+// import adminRoutes from "./routes/adminRoutes.js";
+
+// const app = express();
+
+// // Middleware
+// app.use(cors());
+// app.use(express.json());
+// app.use(requestLogger);
+
+// // Routes
+// app.use("/user", userRoutes);
+// app.use("/contest", contestRoutes);
+// app.use("/admin", adminRoutes);
+
+// // Start background jobs
+// startLeaderboardBackgroundJob();
+
+// // Start server
+// const PORT = CONFIG.PORT;
+// app.listen(PORT, () => {
+//   console.log('🚀 Server running on port', PORT);
+//   console.log('📊 Environment:', process.env.NODE_ENV || 'development');
+//   console.log('🔗 Frontend URL:', CONFIG.FRONTEND_URL);
+//   console.log('📧 Email configured for:', CONFIG.EMAIL_USER);
+//   console.log('🗄️ Database URL:', CONFIG.DATABASE_URL.split('@')[1]); // Hide password
+//   console.log('⚡ Redis URL:', CONFIG.REDIS_URL);
+// });
+
+// export default app;
