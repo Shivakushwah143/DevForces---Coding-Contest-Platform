@@ -4,7 +4,7 @@ dotenv.config();
 // ==================== DIRECT CONFIG VALUES
 const CONFIG = {
   DATABASE_URL: process.env.DATABASE_URL || "",
-  PORT: 4000,
+  PORT: process.env.PORT || 3000,
   EMAIL_USER: process.env.EMAIL_USER || "shivakushwah144@gmail.com",
   EMAIL_PASS: process.env.EMAIL_PASS || "bhhaiphbziefhkbu",
   REDIS_URL: process.env.REDIS_URL || "rediss://default:AZrqAAIncDJmNDE2M2MzNjU5YzI0NmJmYTdkY2U1MDkzYzEwOTJhMHAyMzk2NTg@rare-pelican-39658.upstash.io:6379",
