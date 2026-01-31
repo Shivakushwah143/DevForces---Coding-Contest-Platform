@@ -69,7 +69,10 @@ interface LeaderboardEntry {
 // ==================== CLIENTS ====================
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
+  accelerateUrl: process.env.DATABASE_URL || '',
 })
+
+
 const redisClient: RedisClientType = createClient({
   url: CONFIG.REDIS_URL,
 }) as RedisClientType;
