@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsc -b && node dist/index.js"
+    "build": "tsc && npx prisma generate",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "prisma:migrate": "npx prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
@@ -22,7 +25,7 @@
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^7.0.13",
-    "prisma": "^7.0.0",
+    "prisma": "^6.19.2",
     "redis": "^5.10.0",
     "zod": "^4.3.6"
   },
