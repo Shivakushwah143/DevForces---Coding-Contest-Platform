@@ -5,7 +5,7 @@ dotenv.config();
 const CONFIG = {
   DATABASE_URL:
     "postgresql://postgres:admin@localhost:5433/devforces?schema=public",
-  PORT: 4000,
+  PORT: 3000,
   EMAIL_USER: "shivakushwah144@gmail.com",
   EMAIL_PASS: "bhhaiphbziefhkbu",
   REDIS_URL: "redis://localhost:6379",
