@@ -5,7 +5,8 @@ DevForces – Coding Contest Platform
 DevForces, a coding contest platform with real-time leaderboards, AI-assisted evaluation, email magic-link auth, and Notion-based problem statements.
 
 This service powers contests, challenges, submissions, scoring, and rankings.
-![Uploading Screenshot 2026-01-26 215744.png…]()
+<img width="1919" height="800" alt="Screenshot 2026-01-26 215744" src="https://github.com/user-attachments/assets/9ac94fec-2263-40ff-a4d1-e926e07285b6" />
+
 
 
 Tech Stack
