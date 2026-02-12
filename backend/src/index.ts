@@ -3,19 +3,21 @@ dotenv.config();
 
 // ==================== DIRECT CONFIG VALUES
 const CONFIG = {
-  DATABASE_URL: process.env.DATABASE_URL || "",
+  DATABASE_URL: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_lM6rHUZTY5Na@ep-shy-lake-ahtwt7oq-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
   PORT: process.env.PORT || 3000,
-  EMAIL_USER: process.env.EMAIL_USER || "shivakushwah144@gmail.com",
-  EMAIL_PASS: process.env.EMAIL_PASS || "bhhaiphbziefhkbu",
+  EMAIL_USER: process.env.EMAIL_USER || "",
+  EMAIL_PASS: process.env.EMAIL_PASS || "",
   REDIS_URL: process.env.REDIS_URL || "rediss://default:AZrqAAIncDJmNDE2M2MzNjU5YzI0NmJmYTdkY2U1MDkzYzEwOTJhMHAyMzk2NTg@rare-pelican-39658.upstash.io:6379",
   JWT_SECRET: "your-secret-key",
   JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET  || "your-refresh-secret",
   EMAIL_JWT_SECRET: process.env.EMAIL_JWT_SECRET  || "your-email-jwt-secret",
-  EMAIL_HOST: "smtp.gmail.com",
+  EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
   GROQ_API_KEY: process.env.GROQ_API_KEY || "",
-  EMAIL_PORT: 587,
-  EMAIL_FROM:  process.env.EMAIL_FROM  ||"shivakushwah144@gmail.com",
-  FRONTEND_URL:  process.env.FRONTEND_URL  ||"https://dev-forces-coding-contest-platform.vercel.app/",
+  EMAIL_PORT: Number(process.env.EMAIL_PORT || 587),
+  EMAIL_FROM:  process.env.EMAIL_FROM  ||"",
+  FRONTEND_URL: (process.env.FRONTEND_URL || "https://dev-forces-coding-contest-platform.vercel.app")
+    .replace(/\/$/, ""),
+  SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || "",
 };
 
 console.log("Using direct configuration values");
@@ -26,9 +28,11 @@ import type { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import express from "express";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 // import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaClient } from "@prisma/client";
+import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 
 import { z } from "zod";
 import axios from "axios";
@@ -67,26 +71,21 @@ interface LeaderboardEntry {
 }
 
 // ==================== CLIENTS ====================
+const { Pool } = pg;
+const pool = new Pool({ connectionString: CONFIG.DATABASE_URL });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  accelerateUrl: process.env.DATABASE_URL || '',
-})
-
+  adapter,
+  log: ["query", "error", "warn"],
+});
 
 const redisClient: RedisClientType = createClient({
   url: CONFIG.REDIS_URL,
 }) as RedisClientType;
 
-// Email transporter
-const transporter = nodemailer.createTransport({
-  host: CONFIG.EMAIL_HOST,
-  port: CONFIG.EMAIL_PORT,
-  secure: true,
-  auth: {
-    user: CONFIG.EMAIL_USER,
-    pass: CONFIG.EMAIL_PASS,
-  },
-});
+if (CONFIG.SENDGRID_API_KEY) {
+  sgMail.setApiKey(CONFIG.SENDGRID_API_KEY);
+}
 
 // ==================== REDIS CONNECTION ====================
 redisClient.on("error", (err) => console.log("Redis Client Error", err));
@@ -184,17 +183,21 @@ Score (0-${maxPoints}):`,
 
 // ==================== EMAIL SERVICE ====================
 async function sendEmail(to: string, subject: string, html: string) {
-  if (process.env.NODE_ENV === "production") {
-    await transporter.sendMail({
-      from: CONFIG.EMAIL_FROM,
+  if (CONFIG.SENDGRID_API_KEY) {
+    if (!CONFIG.EMAIL_FROM) {
+      throw new Error("EMAIL_FROM is missing");
+    }
+    await sgMail.send({
       to,
+      from: CONFIG.EMAIL_FROM,
       subject,
       html,
     });
-  } else {
-    console.log(`Email to ${to}: ${subject}`);
-    console.log(html);
+    return;
   }
+
+  console.log(`Email to ${to}: ${subject}`);
+  console.log(html);
 }
 
 // ==================== MIDDLEWARES ====================

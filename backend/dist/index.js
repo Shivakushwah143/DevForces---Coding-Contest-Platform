@@ -2,19 +2,21 @@ import dotenv from "dotenv";
 dotenv.config();
 // ==================== DIRECT CONFIG VALUES
 const CONFIG = {
-    DATABASE_URL: process.env.DATABASE_URL || "",
-    PORT: 4000,
-    EMAIL_USER: "shivakushwah144@gmail.com",
-    EMAIL_PASS: "bhhaiphbziefhkbu",
-    REDIS_URL: "redis://localhost:6379",
+    DATABASE_URL: process.env.DATABASE_URL || "postgresql://neondb_owner:npg_lM6rHUZTY5Na@ep-shy-lake-ahtwt7oq-pooler.c-3.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+    PORT: process.env.PORT || 3000,
+    EMAIL_USER: process.env.EMAIL_USER || "",
+    EMAIL_PASS: process.env.EMAIL_PASS || "",
+    REDIS_URL: process.env.REDIS_URL || "rediss://default:AZrqAAIncDJmNDE2M2MzNjU5YzI0NmJmYTdkY2U1MDkzYzEwOTJhMHAyMzk2NTg@rare-pelican-39658.upstash.io:6379",
     JWT_SECRET: "your-secret-key",
-    JWT_REFRESH_SECRET: "your-refresh-secret",
-    EMAIL_JWT_SECRET: "your-email-jwt-secret",
-    EMAIL_HOST: "smtp.gmail.com",
+    JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || "your-refresh-secret",
+    EMAIL_JWT_SECRET: process.env.EMAIL_JWT_SECRET || "your-email-jwt-secret",
+    EMAIL_HOST: process.env.EMAIL_HOST || "smtp.gmail.com",
     GROQ_API_KEY: process.env.GROQ_API_KEY || "",
-    EMAIL_PORT: 587,
-    EMAIL_FROM: "shivakushwah144@gmail.com",
-    FRONTEND_URL: "https://dev-forces-coding-contest-platform.vercel.app/",
+    EMAIL_PORT: Number(process.env.EMAIL_PORT || 587),
+    EMAIL_FROM: process.env.EMAIL_FROM || "",
+    FRONTEND_URL: (process.env.FRONTEND_URL || "https://dev-forces-coding-contest-platform.vercel.app")
+        .replace(/\/$/, ""),
+    SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || "",
 };
 console.log("Using direct configuration values");
 console.log("DATABASE_URL:", CONFIG.DATABASE_URL);
@@ -22,9 +24,11 @@ console.log("PORT:", CONFIG.PORT);
 import cors from "cors";
 import express from "express";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
 // import { PrismaClient } from "../generated/prisma/client.js";
 import { PrismaClient } from "@prisma/client";
+import pg from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { z } from "zod";
 import axios from "axios";
 import { createClient } from "redis";
@@ -47,20 +51,19 @@ const SubmissionSchema = z.object({
     submission: z.string(),
 });
 // ==================== CLIENTS ====================
-const prisma = new PrismaClient();
+const { Pool } = pg;
+const pool = new Pool({ connectionString: CONFIG.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({
+    adapter,
+    log: ["query", "error", "warn"],
+});
 const redisClient = createClient({
     url: CONFIG.REDIS_URL,
 });
-// Email transporter
-const transporter = nodemailer.createTransport({
-    host: CONFIG.EMAIL_HOST,
-    port: CONFIG.EMAIL_PORT,
-    secure: true,
-    auth: {
-        user: CONFIG.EMAIL_USER,
-        pass: CONFIG.EMAIL_PASS,
-    },
-});
+if (CONFIG.SENDGRID_API_KEY) {
+    sgMail.setApiKey(CONFIG.SENDGRID_API_KEY);
+}
 // ==================== REDIS CONNECTION ====================
 redisClient.on("error", (err) => console.log("Redis Client Error", err));
 redisClient.connect();
@@ -135,18 +138,20 @@ Score (0-${maxPoints}):`,
 }
 // ==================== EMAIL SERVICE ====================
 async function sendEmail(to, subject, html) {
-    if (process.env.NODE_ENV === "production") {
-        await transporter.sendMail({
-            from: CONFIG.EMAIL_FROM,
+    if (CONFIG.SENDGRID_API_KEY) {
+        if (!CONFIG.EMAIL_FROM) {
+            throw new Error("EMAIL_FROM is missing");
+        }
+        await sgMail.send({
             to,
+            from: CONFIG.EMAIL_FROM,
             subject,
             html,
         });
+        return;
     }
-    else {
-        console.log(`Email to ${to}: ${subject}`);
-        console.log(html);
-    }
+    console.log(`Email to ${to}: ${subject}`);
+    console.log(html);
 }
 // ==================== MIDDLEWARES ====================
 function userMiddleware(req, res, next) {
@@ -328,9 +333,6 @@ app.get("/contest/leaderboard/:contestId", async (req, res) => {
 // Now put the parameterized routes AFTER specific routes
 app.get("/contest/:contestId", userMiddleware, async (req, res) => {
     const { contestId } = req.params;
-    if (!contestId) {
-        return;
-    }
     const contest = await prisma.contest.findUnique({
         where: { id: contestId },
         include: {
@@ -370,6 +372,7 @@ app.get("/contest/:contestId/:challengeId", userMiddleware, async (req, res) => 
 const submissionCounts = new Map();
 app.post("/contest/submit/:challengeId", userMiddleware, async (req, res) => {
     const { challengeId } = req.params;
+    ;
     const parsed = SubmissionSchema.safeParse(req.body);
     if (!parsed.success) {
         return res.status(400).json({ error: "Invalid submission" });
@@ -439,6 +442,7 @@ app.post("/admin/challenge", adminMiddleware, async (req, res) => {
 });
 app.post("/admin/link/:challengeId/:contestId", adminMiddleware, async (req, res) => {
     const { challengeId, contestId } = req.params;
+    ;
     const { index } = req.body;
     const mapping = await prisma.contestToChallengeMapping.create({
         data: {
@@ -484,35 +488,4 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 export default app;
-// import express from "express";
-// import cors from "cors";
-// import { CONFIG } from "./config/index.js";
-// import { requestLogger } from "./middleware/index.js";
-// import { startLeaderboardBackgroundJob } from "./services/leaderboardService.js";
-// // Import routes
-// import userRoutes from "./routes/userRoutes.js";
-// import contestRoutes from "./routes/contestRoutes.js";
-// import adminRoutes from "./routes/adminRoutes.js";
-// const app = express();
-// // Middleware
-// app.use(cors());
-// app.use(express.json());
-// app.use(requestLogger);
-// // Routes
-// app.use("/user", userRoutes);
-// app.use("/contest", contestRoutes);
-// app.use("/admin", adminRoutes);
-// // Start background jobs
-// startLeaderboardBackgroundJob();
-// // Start server
-// const PORT = CONFIG.PORT;
-// app.listen(PORT, () => {
-//   console.log('🚀 Server running on port', PORT);
-//   console.log('📊 Environment:', process.env.NODE_ENV || 'development');
-//   console.log('🔗 Frontend URL:', CONFIG.FRONTEND_URL);
-//   console.log('📧 Email configured for:', CONFIG.EMAIL_USER);
-//   console.log('🗄️ Database URL:', CONFIG.DATABASE_URL.split('@')[1]); // Hide password
-//   console.log('⚡ Redis URL:', CONFIG.REDIS_URL);
-// });
-// export default app;
 //# sourceMappingURL=index.js.map
